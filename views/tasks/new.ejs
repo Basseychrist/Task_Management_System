@@ -1,0 +1,62 @@
+<div class="form-card">
+    <h1>Add New Task</h1>
+    <% if (errors && errors.length > 0) { %>
+        <div class="alert alert-danger">
+            <ul>
+                <% errors.forEach(error => { %>
+                    <li><%= error.msg %></li>
+                <% }) %>
+            </ul>
+        </div>
+    <% } %>
+    <form action="/tasks" method="POST">
+        <div class="form-group">
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" value="<%= task ? task.title : '' %>" required>
+        </div>
+        <div class="form-group">
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" rows="5" required><%= task ? task.description : '' %></textarea>
+        </div>
+        <div class="form-group">
+            <label for="status">Status:</label>
+            <select id="status" name="status">
+                <option value="pending" <%= task && task.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                <option value="in-progress" <%= task && task.status === 'in-progress' ? 'selected' : '' %>>In-Progress</option>
+                <option value="completed" <%= task && task.status === 'completed' ? 'selected' : '' %>>Completed</option>
+                <option value="cancelled" <%= task && task.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="priority">Priority:</label>
+            <select id="priority" name="priority">
+                <option value="low" <%= task && task.priority === 'low' ? 'selected' : '' %>>Low</option>
+                <option value="medium" <%= task && task.priority === 'medium' ? 'selected' : '' %>>Medium</option>
+                <option value="high" <%= task && task.priority === 'high' ? 'selected' : '' %>>High</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="dueDate">Due Date:</label>
+            <input type="date" id="dueDate" name="dueDate" value="<%= task && task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '' %>">
+        </div>
+        <div class="form-group">
+            <label for="assignedTo">Assigned To (Optional):</label>
+            <select id="assignedTo" name="assignedTo">
+                <option value="">None</option>
+                <% users.forEach(user => { %>
+                    <option value="<%= user._id %>" <%= task && task.assignedTo && task.assignedTo.toString() === user._id.toString() ? 'selected' : '' %>><%= user.displayName %></option>
+                <% }) %>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="tags">Tags (comma-separated):</label>
+            <input type="text" id="tags" name="tags" value="<%= task && task.tags ? task.tags.join(', ') : '' %>">
+        </div>
+        <div class="form-group">
+            <label for="attachments">Attachments (JSON array of {filename, url, size}):</label>
+            <textarea id="attachments" name="attachments" rows="3" placeholder='[{"filename": "doc1.pdf", "url": "http://example.com/doc1.pdf"}]'><%= task && task.attachments ? JSON.stringify(task.attachments) : '' %></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Create Task</button>
+        <a href="/tasks" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>

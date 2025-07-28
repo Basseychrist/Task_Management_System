@@ -1,0 +1,15 @@
+<div class="profile-card">
+    <h1>User Profile</h1>
+    <% if (user) { %>
+        <img src="<%= user.image %>" alt="<%= user.displayName %>" class="profile-img">
+        <h2><%= user.displayName %></h2>
+        <p><strong>First Name:</strong> <%= user.firstName %></p>
+        <p><strong>Last Name:</strong> <%= user.lastName %></p>
+        <p><strong>Email:</strong> <%= user.email %></p>
+        <p><strong>Member Since:</strong> <%= new Date(user.createdAt).toLocaleDateString() %></p>
+    <% } else { %>
+        <p>User not found or not logged in.</p>
+    <% } %>
+    <a href="/tasks" class="btn btn-secondary">Back to Tasks</a>
+</div>
+

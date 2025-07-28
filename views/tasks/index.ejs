@@ -1,0 +1,30 @@
+<div class="tasks-header">
+    <h1>My Tasks</h1>
+    <a href="/tasks/new" class="btn btn-add-task">Add New Task</a>
+</div>
+
+<% if (tasks.length > 0) { %>
+    <div class="task-list">
+        <% tasks.forEach(task => { %>
+            <div class="task-card">
+                <h3><a href="/tasks/<%= task._id %>"><%= task.title %></a></h3>
+                <p><strong>Status:</strong> <span class="status <%= task.status %>"><%= task.status.charAt(0).toUpperCase() + task.status.slice(1) %></span></p>
+                <p><strong>Priority:</strong> <span class="priority <%= task.priority %>"><%= task.priority.charAt(0).toUpperCase() + task.priority.slice(1) %></span></p>
+                <p><strong>Due Date:</strong> <%= task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A' %></p>
+                <p><strong>Created By:</strong> <%= task.createdBy.displayName %></p>
+                <% if (task.assignedTo) { %>
+                    <p><strong>Assigned To:</strong> <%= task.assignedTo.displayName %></p>
+                <% } %>
+                <div class="task-actions">
+                    <a href="/tasks/<%= task._id %>/edit" class="btn btn-edit">Edit</a>
+                    <form action="/tasks/<%= task._id %>?_method=DELETE" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-delete" onclick="return confirm('Are you sure you want to delete this task?');">Delete</button>
+                    </form>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+<% } else { %>
+    <p>No tasks found. Start by creating a new one!</p>
+<% } %>
+

@@ -1,0 +1,89 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Task Management API",
+    "version": "1.0.0",
+    "description": "API documentation for the Task Management System",
+    "contact": {
+      "name": "Your Name",
+      "email": "your.email@example.com"
+    },
+    "servers": [
+      { "url": "http://localhost:5000", "description": "Development Server" },
+      { "url": "YOUR_RENDER_DEPLOYED_URL", "description": "Production Server" }
+    ]
+  },
+  "components": {
+    "schemas": {
+      "Task": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string", "description": "Task ID" },
+          "title": { "type": "string", "description": "Title of the task" },
+          "description": { "type": "string", "description": "Description of the task" },
+          "status": { "type": "string", "enum": ["pending", "in-progress", "completed", "cancelled"] },
+          "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+          "dueDate": { "type": "string", "format": "date-time", "description": "Optional due date" },
+          "assignedTo": { "type": "string", "description": "ID of the user assigned to this task (optional)" },
+          "createdBy": { "type": "string", "description": "ID of the user who created this task" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "filename": { "type": "string" },
+                "url": { "type": "string" },
+                "size": { "type": "number" }
+              }
+            }
+          }
+        }
+      },
+      "TaskInput": {
+        "type": "object",
+        "required": ["title", "description"],
+        "properties": {
+          "title": { "type": "string", "description": "Title of the task", "minLength": 5, "maxLength": 100 },
+          "description": { "type": "string", "description": "Description of the task", "minLength": 10, "maxLength": 500 },
+          "status": { "type": "string", "enum": ["pending", "in-progress", "completed", "cancelled"], "default": "pending" },
+          "priority": { "type": "string", "enum": ["low", "medium", "high"], "default": "medium" },
+          "dueDate": { "type": "string", "format": "date", "description": "Optional due date (YYYY-MM-DD)" },
+          "assignedTo": { "type": "string", "description": "ID of the user assigned to this task (optional)" },
+          "tags": { "type": "string", "description": "Comma-separated tags (e.g., \"work, urgent\")" },
+          "attachments": { "type": "string", "description": "JSON string of attachment objects (e.g., '[{\"filename\": \"a.pdf\", \"url\": \"abc.com/a.pdf\"}]')" }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "googleId": { "type": "string" },
+          "displayName": { "type": "string" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "image": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "securitySchemes": {
+      "googleOAuth": {
+        "type": "oauth2",
+        "flows": {
+          "implicit": {
+            "authorizationUrl": "https://accounts.google.com/o/oauth2/auth",
+            "scopes": {
+              "profile": "Access to user profile",
+              "email": "Access to user email"
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [{ "googleOAuth": [] }]
+}
