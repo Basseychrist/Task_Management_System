@@ -75,15 +75,14 @@ router.post(
 );
 
 // Logout route
-router.get("/logout", (req, res) => {
-  req.flash("info", "You have been logged out.");
+router.get("/logout", (req, res, next) => {
   res.clearCookie("jwt");
-  res.clearCookie("token"); // just in case
-  req.session.destroy((err) => {
+  res.clearCookie("token");
+  req.logout(function (err) {
     if (err) {
-      console.error("Session destruction error:", err);
-      // Optionally, flash an error message here
+      return next(err);
     }
+    req.flash("info", "You have been logged out.");
     res.redirect("/");
   });
 });

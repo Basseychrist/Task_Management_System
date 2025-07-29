@@ -12,8 +12,14 @@ router.get(
 // Google OAuth callback
 router.get(
   "/google/callback",
-  passport.authenticate("google", { failureRedirect: "/auth/login" }),
-  authController.googleCallback // Handles user creation and redirect
+  passport.authenticate("google", {
+    failureRedirect: "/account/login",
+    failureFlash: true,
+  }),
+  (req, res) => {
+    // Successful authentication, redirect to dashboard.
+    res.redirect("/dashboard");
+  }
 );
 
 // Logout

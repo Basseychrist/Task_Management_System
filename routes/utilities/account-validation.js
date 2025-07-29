@@ -1,11 +1,10 @@
-const utilities = require(".");
+const utilities = require("../utilities");
 const { body, validationResult } = require("express-validator");
 const accountModel = require("../../models/accountModel");
-
+const { getNav } = require("../../controllers/accountController");
 const validate = {}; /*  **********************************
- 
-  
-  *  Registration Data Validation Rules
+
+*  Registration Data Validation Rules
   * ********************************* */
 validate.registationRules = () => {
   return [
@@ -57,11 +56,11 @@ validate.checkRegData = async (req, res, next) => {
   let errors = [];
   errors = validationResult(req);
   if (!errors.isEmpty()) {
-    let nav = await utilities.getNav();
+    let navigation = await utilities.getNav();
     res.render("account/register", {
       errors,
       title: "Registration",
-      nav,
+      navigation, // <-- use navigation here
       account_firstname,
       account_lastname,
       account_email,
@@ -100,11 +99,11 @@ validate.checkLoginData = async (req, res, next) => {
   const { account_email } = req.body;
   let errors = validationResult(req);
   if (!errors.isEmpty()) {
-    let nav = await utilities.getNav();
+    let navigation = await utilities.getNav();
     res.render("account/login", {
       errors,
       title: "Login",
-      nav,
+      navigation,
       account_email,
     });
     return;
@@ -143,7 +142,7 @@ const checkUpdateAccountData = async (req, res, next) => {
       "error",
       errors.array().map((e) => e.msg)
     );
-    let nav = await utilities.getNav(); // <-- Add this line
+    let navigation = await utilities.getNav(); // <-- Add this line
     return res.render("account/update-account", {
       title: "Update Account",
       user: req.session.user,
@@ -152,7 +151,7 @@ const checkUpdateAccountData = async (req, res, next) => {
       account_email: req.body.account_email,
       errors: errors.array(),
       message: [],
-      nav, // <-- Add this line
+      navigation, // <-- Add this line
     });
   }
   next();
@@ -178,13 +177,13 @@ const checkPasswordData = async (req, res, next) => {
       "error",
       errors.array().map((e) => e.msg)
     );
-    let nav = await utilities.getNav(); // <-- Add this line
+    let navigation = await utilities.getNav(); // <-- Add this line
     return res.render("account/update-account", {
       title: "Update Account",
       user: req.session.user,
       errors: errors.array(),
       message: [],
-      nav, // <-- Add this line
+      navigation,
     });
   }
   next();

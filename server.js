@@ -24,9 +24,9 @@ require("./config/passport")(passport);
 /******************* *
  *routes constant required statements
  *************************/
-
+// const { getNav } = require("./controllers/accountController");
 const accountRoutes = require("./routes/accountRoute");
-const utilities = require("./routes/utilities");
+const utilities = require("./routes/utilities"); // Make sure this is correct
 const baseController = require("./controllers/baseController");
 const errorRoute = require("./routes/errorRoute");
 const auth = require("./routes/auth");
@@ -39,6 +39,17 @@ const swaggerDefinition = require("./doc/swaggerDef.json"); // <--- MODIFIED
 
 // Connect to DB
 connectDB();
+
+// Logging
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+}
+
+// View Engine and Templates
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+app.use(expressLayouts);
+app.set("layout", "./layouts/layout"); // default layout
 
 // Body parser
 app.use(express.urlencoded({ extended: false }));
@@ -55,21 +66,12 @@ app.use(
   })
 );
 
-// Logging
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
-}
-
-// EJS
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
-app.use(expressLayouts);
-app.set("layout", "./layouts/main"); // Set default layout for authenticated views
-
 // Static folder
 app.use(express.static(path.join(__dirname, "public")));
 
-// Sessions (all session middleware)
+// Middleware
+app.use(cookieParser());
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -80,71 +82,44 @@ app.use(
     }),
   })
 );
-
-// Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
-
-/* ***********************
- * Middleware
- * ************************/
-app.use(
-  session({
-    store: new (require("connect-pg-simple")(session))({
-      createTableIfMissing: true,
-    }),
-    secret: process.env.SESSION_SECRET,
-    resave: true,
-    saveUninitialized: true,
-    name: "sessionId",
-  })
-);
-
-app.use(
-  session({
-    store: new (require("connect-pg-simple")(session))({
-      createTableIfMissing: true,
-    }),
-    secret: process.env.SESSION_SECRET,
-    resave: true,
-    saveUninitialized: true,
-    name: "sessionId",
-  })
-);
-
-app.use(cookieParser());
-app.use(utilities.checkJWTToken);
-app.use((req, res, next) => {
-  res.locals.user = req.session.user;
-  next();
-});
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 app.use(flash());
 app.use(function (req, res, next) {
   res.locals.messages = require("express-messages")(req, res);
+  res.locals.user = req.user || null; // Make user object available in views
   next();
 });
-/* ***********************
- * View Engine and Templates
- *************************/
-app.set("view engine", "ejs");
-app.use(expressLayouts);
-app.set("layout", "./layouts/layout"); // not at views root
+
+app.use(utilities.checkJWTToken);
+
+app.use(async (req, res, next) => {
+  res.locals.navigation = await utilities.getNav(req.user);
+  next();
+});
+
+app.use((req, res, next) => {
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    res.locals.loggedin = 1;
+  }
+  next();
+});
 
 // Routes
 /*************************/
-app.use(express.static("public"));
-// app.use(static);
 app.get("/", (req, res) => {
-  res.render("index", { title: "Home" }); // Use index.ejs
+  res.render("index", { title: "Home" });
 });
 app.use("/account", accountRoutes);
-app.use("/", errorRoute);
 app.use("/tasks", tasks);
 app.use("/auth", auth);
+app.get("/dashboard", utilities.checkLogin, (req, res) => {
+  res.render("dashboard", {
+    title: "Dashboard",
+    user: req.user || res.locals.user,
+  });
+});
 
 // API Documentation
 app.use(
@@ -157,10 +132,6 @@ app.use(
     })
   )
 );
-
-// Error handling
-app.use(utilities.handleErrors(baseController.buildHome));
-app.use(errorRoute); // This should be after all other routes, as a catch-all error handler
 
 // File Not Found Route - must be last route in list
 app.use(async (req, res, next) => {

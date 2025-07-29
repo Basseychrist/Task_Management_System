@@ -169,24 +169,24 @@ async function accountLogin(req, res) {
 }
 
 // Deliver the update account view
-// async function buildUpdateAccount(req, res, next) {
-//   let nav = await utilities.getNav();
-//   const user = await accountModel.getAccountById(req.params.account_id);
-//   res.render("account/update-account", {
-//     title: "Update Account",
-//     nav,
-//     user,
-//     account_firstname: user.account_firstname,
-//     account_lastname: user.account_lastname,
-//     account_email: user.account_email,
-//     errors: req.flash("error"),
-//     message: req.flash("message"),
-//   });
-// }
+async function buildUpdateAccount(req, res, next) {
+  let navigation = await utilities.getNav();
+  const user = await accountModel.getAccountById(req.params.account_id);
+  res.render("account/update-account", {
+    title: "Update Account",
+    navigation,
+    user,
+    account_firstname: user.account_firstname,
+    account_lastname: user.account_lastname,
+    account_email: user.account_email,
+    errors: req.flash("error"),
+    message: req.flash("message"),
+  });
+}
 
 // Handle account info update
 async function updateAccount(req, res) {
-  let nav = await utilities.getNav();
+  let navigation = await utilities.getNav();
   const errors = validationResult(req);
   const { account_id, account_firstname, account_lastname, account_email } =
     req.body;
@@ -194,7 +194,7 @@ async function updateAccount(req, res) {
     const user = await accountModel.getAccountById(account_id);
     return res.render("account/update-account", {
       title: "Update Account",
-      nav,
+      navigation,
       user,
       account_firstname,
       account_lastname,
@@ -220,7 +220,7 @@ async function updateAccount(req, res) {
   const user = await accountModel.getAccountById(account_id);
   res.render("account/account", {
     title: "My Account",
-    nav,
+    navigation,
     message: req.flash("message"),
     info: req.flash("info"), // Always include
     notice: req.flash("notice"), // Always include
@@ -231,14 +231,14 @@ async function updateAccount(req, res) {
 
 // Handle password change
 async function changePassword(req, res, next) {
-  let nav = await utilities.getNav();
+  let navigation = await utilities.getNav();
   const errors = validationResult(req);
   const { account_id, account_password } = req.body;
   if (!errors.isEmpty()) {
     const user = await accountModel.getAccountById(account_id);
     return res.render("account/update-account", {
       title: "Update Account",
-      nav,
+      navigation,
       user,
       account_firstname: user.account_firstname,
       account_lastname: user.account_lastname,
@@ -260,7 +260,7 @@ async function changePassword(req, res, next) {
   const user = await accountModel.getAccountById(account_id);
   res.render("account/account", {
     title: "My Account",
-    nav,
+    navigation,
     message: req.flash("message"),
     info: req.flash("info"), // Add this line
     notice: req.flash("notice"), // Add this line
@@ -268,33 +268,43 @@ async function changePassword(req, res, next) {
   });
 }
 
-// Export the functions for use in routes
+async function getNav(user) {
+  let navigation = `
+    <nav>
+      <a href="/">Home</a>
+      <a href="/auth/login">Login</a>
+      <a href="/auth/register">Register</a>
+      <a href="/account">Account</a>
+    </nav>
+  `;
+  if (user) {
+    navigation = `
+      <nav>
+        <a href="/">Home</a>
+        <a href="/account">Account</a>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/auth/logout">Logout</a>
+      </nav>
+    `;
+  }
+  return navigation;
+}
+
+// Export all functions together
 module.exports = {
   buildAccount,
   buildLogin,
   buildRegister,
   registerAccount,
   accountLogin,
-  // buildUpdateAccount,
-  updateAccount, // Now this works!
+  updateAccount,
   changePassword,
+  buildUpdateAccount,
   buildDashboard: (req, res) => {
-    // req.user is populated by Passport after Google login
     res.render("dashboard", {
       title: "Dashboard",
-      user: req.user, // Contains Google credentials
+      user: req.user,
     });
   },
+  getNav, // <-- add getNav here
 };
-
-async function getNav() {
-  return `
-    <nav>
-      <a href="/">Home</a>
-      <a href="/account">Account</a>
-      <a href="/tasks">Tasks</a>
-      <a href="/auth/login">Login</a>
-      <a href="/auth/register">Register</a>
-    </nav>
-  `;
-}

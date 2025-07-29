@@ -1,5 +1,51 @@
+const jwt = require("jsonwebtoken");
+
+// Error handler wrapper
+function handleErrors(fn) {
+  return function (req, res, next) {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+}
+
+// JWT token checker
+function checkJWTToken(req, res, next) {
+  if (req.cookies.jwt) {
+    jwt.verify(
+      req.cookies.jwt,
+      process.env.ACCESS_TOKEN_SECRET,
+      function (err, accountData) {
+        if (err) {
+          req.flash("Please log in");
+          res.clearCookie("jwt");
+          return res.redirect("/account/login");
+        }
+        res.locals.accountData = accountData;
+        res.locals.loggedin = 1;
+        next();
+      }
+    );
+  } else {
+    next();
+  }
+}
+
+// Login checker
+function checkLogin(req, res, next) {
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    return next();
+  }
+  if (req.user) {
+    return next();
+  }
+  if (res.locals.loggedin) {
+    return next();
+  }
+  req.flash("notice", "Please log in.");
+  return res.redirect("/account/login");
+}
+
+// Navigation builder
 async function getNav(user) {
-  // Build navigation links based on user authentication
   let nav = `
     <nav>
       <a href="/">Home</a>
@@ -8,7 +54,6 @@ async function getNav(user) {
       <a href="/account">Account</a>
     </nav>
   `;
-  // If user is logged in, show only relevant links
   if (user) {
     nav = `
       <nav>
@@ -22,13 +67,9 @@ async function getNav(user) {
   return nav;
 }
 
-function handleErrors(fn) {
-  return function (req, res, next) {
-    Promise.resolve(fn(req, res, next)).catch(next);
-  };
-}
-
 module.exports = {
   handleErrors,
+  checkJWTToken,
+  checkLogin,
   getNav,
 };

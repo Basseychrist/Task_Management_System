@@ -1,5 +1,5 @@
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const User = require("../models/user"); // Adjust path as needed
+const User = require("../models/user"); // Your user model
 
 module.exports = function (passport) {
   passport.use(
@@ -17,6 +17,8 @@ module.exports = function (passport) {
             googleId: profile.id,
             displayName: profile.displayName,
             email: profile.emails[0].value,
+            firstName: profile.name.givenName, // <-- add this
+            lastName: profile.name.familyName, // <-- add this
           });
         }
         return done(null, user);
@@ -25,15 +27,11 @@ module.exports = function (passport) {
   );
 
   passport.serializeUser((user, done) => {
-    done(null, user.id);
+    done(null, user.id); // or user._id
   });
 
   passport.deserializeUser(async (id, done) => {
-    try {
-      const user = await User.findById(id);
-      done(null, user);
-    } catch (err) {
-      done(err, null);
-    }
+    const user = await User.findById(id);
+    done(null, user);
   });
 };
