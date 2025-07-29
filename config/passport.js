@@ -7,21 +7,24 @@ module.exports = function (passport) {
       {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: process.env.GOOGLE_CALLBACK_URL,
+        callbackURL: process.env.GOOGLE_CALLBACK_URL, // Use env variable for callback
       },
       async (accessToken, refreshToken, profile, done) => {
-        // Find or create user logic
-        let user = await User.findOne({ googleId: profile.id });
-        if (!user) {
-          user = await User.create({
-            googleId: profile.id,
-            displayName: profile.displayName,
-            email: profile.emails[0].value,
-            firstName: profile.name.givenName, // <-- add this
-            lastName: profile.name.familyName, // <-- add this
-          });
+        try {
+          let user = await User.findOne({ googleId: profile.id });
+          if (!user) {
+            user = await User.create({
+              googleId: profile.id,
+              displayName: profile.displayName,
+              email: profile.emails[0].value,
+              firstName: profile.name.givenName,
+              lastName: profile.name.familyName,
+            });
+          }
+          return done(null, user);
+        } catch (err) {
+          return done(err, null);
         }
-        return done(null, user);
       }
     )
   );
@@ -31,7 +34,11 @@ module.exports = function (passport) {
   });
 
   passport.deserializeUser(async (id, done) => {
-    const user = await User.findById(id);
-    done(null, user);
+    try {
+      const user = await User.findById(id);
+      done(null, user);
+    } catch (err) {
+      done(err, null);
+    }
   });
 };
