@@ -1,0 +1,68 @@
+<% /* Login View */ %>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title><%= title %></title>
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <p>Welcome to your account page!</p>
+
+    <% if (notice && notice.length) { %>
+    <div class="flash-message"><%= notice %></div>
+    <% } %>
+
+    <form action="/auth/login" method="post" id="login-form">
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="account_email" required />
+
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="account_password" required />
+
+      <button type="submit">Login</button>
+    </form>
+
+    <div style="margin: 20px 0">
+      <a href="/auth/google">
+        <button
+          type="button"
+          style="
+            background: #4285f4;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+          "
+        >
+          <img
+            src="https://developers.google.com/identity/images/g-logo.png"
+            alt="Google logo"
+            style="height: 20px; vertical-align: middle; margin-right: 8px"
+          />
+          Login with Google
+        </button>
+      </a>
+    </div>
+
+    <p>
+      Don't have an account?
+      <a href="/account/register">Register here</a>
+    </p>
+
+    <!-- Add this script to your login page -->
+    <script>
+      document.querySelector("form").addEventListener("submit", function (e) {
+        const email = document
+          .querySelector('[name="account_email"]')
+          .value.trim();
+        const password = document
+          .querySelector('[name="account_password"]')
+          .value.trim();
+        if (!email || !password) {
+          alert("Email and password are required!");
+          e.preventDefault();
+        }
+      });
+    </script>
+  </body>
+</html>

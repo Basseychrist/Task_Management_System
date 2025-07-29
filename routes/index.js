@@ -1,16 +1,13 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { ensureAuth, ensureGuest } = require('../middleware/auth'); // Import the middleware
+const { ensureAuth } = require("../middleware/auth");
+const accountController = require("../controllers/accountController");
 
-
-router.get('/', ensureGuest, (req, res) => {
-  res.render('index', { layout: 'login', title: 'Welcome to Task Manager' }); // Pass layout and title
+// Redirect root to auth login for guests
+router.get("/", (req, res) => {
+  res.redirect("/auth/login");
 });
 
-
-router.get('/dashboard', ensureAuth, (req, res) => {
-  res.render('dashboard', { title: 'Dashboard' }); // Pass title
-});
+router.get("/dashboard", ensureAuth, accountController.buildDashboard);
 
 module.exports = router;
-
