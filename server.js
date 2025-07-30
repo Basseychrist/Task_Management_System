@@ -16,6 +16,7 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerJsdoc = require("swagger-jsdoc");
 const flash = require("connect-flash");
 const cookieParser = require("cookie-parser");
+const cors = require("cors");
 const app = express();
 // Passport config
 require("./config/passport")(passport);
@@ -97,6 +98,17 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+// Allow all origins (for testing, you can restrict this in production)
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5000", // local Swagger UI
+      "https://task-management-system-rf8o.onrender.com", // deployed Swagger UI
+    ],
+    credentials: true,
+  })
+);
 
 // Routes
 /*************************/
