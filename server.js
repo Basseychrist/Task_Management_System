@@ -56,15 +56,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 // Method override
-app.use(
-  methodOverride(function (req, res) {
-    if (req.body && typeof req.body === "object" && "_method" in req.body) {
-      let method = req.body._method;
-      delete req.body._method;
-      return method;
-    }
-  })
-);
+app.use(methodOverride("_method"));
 
 // Static folder
 app.use(express.static(path.join(__dirname, "public")));
@@ -112,7 +104,7 @@ app.get("/", (req, res) => {
   res.render("index", { title: "Home" });
 });
 app.use("/account", accountRoutes);
-app.use("/tasks", tasks);
+app.use("/tasks", tasks); // tasks router
 app.use("/auth", auth);
 app.get("/dashboard", utilities.checkLogin, (req, res) => {
   res.render("dashboard", {

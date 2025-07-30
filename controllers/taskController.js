@@ -10,8 +10,8 @@ const handleError = (
   statusCode = 500
 ) => {
   console.error(error);
-  // Ensure the error view can handle a 'title'
-  res.status(statusCode).render("error", {
+  res.status(statusCode).render("errors/error", {
+    // <-- update this line
     message: message,
     status: statusCode,
     error: error.message,
@@ -89,10 +89,19 @@ exports.newTaskPage = async (req, res) => {
       users,
       errors: null,
       title: "Add New Task", // Pass title
+      task: {}, // <-- Always pass an empty task object
     });
   } catch (err) {
     handleError(res, err, "Failed to load new task form", 500);
   }
+};
+
+// Example controller for rendering the new task form
+exports.newTaskForm = (req, res) => {
+  res.render("tasks/new", {
+    title: "Create New Task",
+    task: {}, // Pass an empty object if creating a new task
+  });
 };
 
 // @desc    Process add task form
@@ -123,6 +132,14 @@ exports.createTask = async (req, res) => {
       attachments,
     } = req.body;
 
+    let tagsArray = tags;
+    if (typeof tagsArray === "string") {
+      tagsArray = tagsArray
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+    }
+
     const newTask = {
       title,
       description,
@@ -131,12 +148,7 @@ exports.createTask = async (req, res) => {
       dueDate: dueDate ? new Date(dueDate) : null,
       assignedTo: assignedTo || null,
       createdBy: req.user.id,
-      tags: tags
-        ? tags
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter((tag) => tag !== "")
-        : [],
+      tags: tagsArray || [],
       attachments: attachments ? JSON.parse(attachments) : [], // Assuming attachments come as a JSON string
     };
 
@@ -144,6 +156,20 @@ exports.createTask = async (req, res) => {
     req.flash("success_msg", "Task created successfully!");
     res.redirect("/tasks");
   } catch (err) {
+    // If it's a Mongoose validation error, show errors in the form
+    if (err.name === "ValidationError") {
+      const users = await User.find({ _id: { $ne: req.user.id } })
+        .select("displayName")
+        .lean();
+      // Convert Mongoose errors to array for EJS
+      const errors = Object.values(err.errors).map((e) => ({ msg: e.message }));
+      return res.status(400).render("tasks/new", {
+        errors,
+        task: req.body,
+        users,
+        title: "Add New Task",
+      });
+    }
     handleError(res, err, "Failed to create task", 500);
   }
 };
@@ -233,6 +259,15 @@ exports.updateTask = async (req, res) => {
       tags,
       attachments,
     } = req.body;
+
+    let tagsArray = tags;
+    if (typeof tagsArray === "string") {
+      tagsArray = tagsArray
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+    }
+
     const updateData = {
       title,
       description,
@@ -240,12 +275,7 @@ exports.updateTask = async (req, res) => {
       priority,
       dueDate: dueDate ? new Date(dueDate) : null,
       assignedTo: assignedTo || null,
-      tags: tags
-        ? tags
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter((tag) => tag !== "")
-        : [],
+      tags: tagsArray || [],
       attachments: attachments ? JSON.parse(attachments) : [],
       updatedAt: Date.now(),
     };

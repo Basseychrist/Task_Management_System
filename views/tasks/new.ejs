@@ -12,11 +12,11 @@
     <form action="/tasks" method="POST">
         <div class="form-group">
             <label for="title">Title:</label>
-            <input type="text" id="title" name="title" value="<%= task ? task.title : '' %>" required>
+            <input type="text" id="title" name="title" value="<%= task.title || '' %>" required maxlength="100">
         </div>
         <div class="form-group">
             <label for="description">Description:</label>
-            <textarea id="description" name="description" rows="5" required><%= task ? task.description : '' %></textarea>
+            <textarea id="description" name="description" required><%= task.description || '' %></textarea>
         </div>
         <div class="form-group">
             <label for="status">Status:</label>
@@ -29,10 +29,10 @@
         </div>
         <div class="form-group">
             <label for="priority">Priority:</label>
-            <select id="priority" name="priority">
-                <option value="low" <%= task && task.priority === 'low' ? 'selected' : '' %>>Low</option>
-                <option value="medium" <%= task && task.priority === 'medium' ? 'selected' : '' %>>Medium</option>
-                <option value="high" <%= task && task.priority === 'high' ? 'selected' : '' %>>High</option>
+            <select id="priority" name="priority" required>
+                <option value="low" <%= task.priority === 'low' ? 'selected' : '' %>>Low</option>
+                <option value="medium" <%= task.priority === 'medium' ? 'selected' : '' %>>Medium</option>
+                <option value="high" <%= task.priority === 'high' ? 'selected' : '' %>>High</option>
             </select>
         </div>
         <div class="form-group">
@@ -50,13 +50,41 @@
         </div>
         <div class="form-group">
             <label for="tags">Tags (comma-separated):</label>
-            <input type="text" id="tags" name="tags" value="<%= task && task.tags ? task.tags.join(', ') : '' %>">
+            <input type="text" id="tags" name="tags" value="<%= Array.isArray(task.tags) ? task.tags.join(', ') : (task.tags || '') %>">
         </div>
         <div class="form-group">
             <label for="attachments">Attachments (JSON array of {filename, url, size}):</label>
-            <textarea id="attachments" name="attachments" rows="3" placeholder='[{"filename": "doc1.pdf", "url": "http://example.com/doc1.pdf"}]'><%= task && task.attachments ? JSON.stringify(task.attachments) : '' %></textarea>
+            <textarea id="attachments" name="attachments" rows="3" placeholder='[{"filename": "doc1.pdf", "url": "http://example.com/doc1.pdf", "size": 12345}]'><%= task && task.attachments ? JSON.stringify(task.attachments) : '' %></textarea>
+            <small>Each attachment must have a <b>filename</b>, <b>url</b>, and <b>size</b>.</small>
         </div>
         <button type="submit" class="btn btn-primary">Create Task</button>
         <a href="/tasks" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
+<script>
+document.querySelector("form").addEventListener("submit", function(e) {
+  const title = document.getElementById("title").value.trim();
+  const description = document.getElementById("description").value.trim();
+  const dueDate = document.getElementById("dueDate").value;
+  const attachments = document.getElementById("attachments").value.trim();
+  let errors = [];
+
+  if (!title) errors.push("Title is required.");
+  if (title.length > 100) errors.push("Title must be at most 100 characters.");
+  if (!description) errors.push("Description is required.");
+  if (dueDate && isNaN(Date.parse(dueDate))) errors.push("Due date must be a valid date.");
+  if (attachments) {
+    try {
+      const arr = JSON.parse(attachments);
+      if (!Array.isArray(arr)) throw new Error();
+    } catch {
+      errors.push("Attachments must be a valid JSON array.");
+    }
+  }
+
+  if (errors.length > 0) {
+    alert(errors.join("\n"));
+    e.preventDefault();
+  }
+});
+</script>

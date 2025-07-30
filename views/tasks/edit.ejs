@@ -50,7 +50,7 @@
         </div>
         <div class="form-group">
             <label for="tags">Tags (comma-separated):</label>
-            <input type="text" id="tags" name="tags" value="<%= task.tags ? task.tags.join(', ') : '' %>">
+            <input type="text" id="tags" name="tags" value="<%= Array.isArray(task.tags) ? task.tags.join(', ') : (task.tags || '') %>">
         </div>
         <div class="form-group">
             <label for="attachments">Attachments (JSON array of {filename, url, size}):</label>

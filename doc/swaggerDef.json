@@ -11,8 +11,8 @@
   },
   "servers": [
     {
-      "url": "http://localhost:5000",
-      "description": "Local development server"
+      "url": "https://task-management-system-rf8o.onrender.com/",
+      "description": "production server"
     }
   ],
   "components": {
@@ -185,7 +185,9 @@
                 "schema": { "$ref": "#/components/schemas/Task" }
               }
             }
-          }
+          },
+          "400": { "description": "Validation Error" },
+          "500": { "description": "Server Error" }
         }
       }
     },

@@ -4,6 +4,52 @@ const taskController = require("../controllers/taskController");
 const { ensureAuth } = require("../middleware/auth");
 const { body } = require("express-validator");
 
+const taskValidationRules = [
+  body("title")
+    .trim()
+    .notEmpty()
+    .withMessage("Title is required.")
+    .isLength({ max: 100 })
+    .withMessage("Title must be at most 100 characters."),
+  body("description").trim().notEmpty().withMessage("Description is required."),
+  body("priority")
+    .optional()
+    .isIn(["low", "medium", "high"])
+    .withMessage("Priority must be low, medium, or high."),
+  body("status")
+    .optional()
+    .isIn(["pending", "in-progress", "completed", "cancelled"])
+    .withMessage("Invalid status."),
+  body("dueDate")
+    .optional({ checkFalsy: true })
+    .isISO8601()
+    .withMessage("Due date must be a valid date."),
+  body("tags")
+    .optional()
+    .customSanitizer((tags) =>
+      Array.isArray(tags)
+        ? tags
+        : typeof tags === "string"
+        ? tags
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : []
+    ),
+  body("attachments")
+    .optional()
+    .custom((value) => {
+      if (!value) return true;
+      try {
+        const arr = typeof value === "string" ? JSON.parse(value) : value;
+        if (!Array.isArray(arr)) throw new Error();
+        return true;
+      } catch {
+        throw new Error("Attachments must be a valid JSON array.");
+      }
+    }),
+];
+
 // Validation middleware for task creation and update
 const validateTask = [
   body("title")
@@ -89,7 +135,7 @@ router.get("/", ensureAuth, taskController.getTasks);
 
 router.get("/new", ensureAuth, taskController.newTaskPage);
 
-router.post("/", ensureAuth, validateTask, taskController.createTask);
+router.post("/", taskValidationRules, taskController.createTask);
 
 router.get("/:id", ensureAuth, taskController.getTaskById);
 
