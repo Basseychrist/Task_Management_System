@@ -29,6 +29,8 @@ module.exports = function (passport) {
     )
   );
 
+  // Serialize and deserialize user
+  // This is used to save user info in the session
   passport.serializeUser((user, done) => {
     done(null, user.id); // or user._id
   });
