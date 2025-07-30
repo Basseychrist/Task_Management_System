@@ -1,5 +1,5 @@
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const User = require("../models/user"); // Your user model
+const User = require("../models/user");
 
 module.exports = function (passport) {
   passport.use(
@@ -7,7 +7,10 @@ module.exports = function (passport) {
       {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: process.env.GOOGLE_CALLBACK_URL, // Use env variable for callback
+        callbackURL:
+          process.env.NODE_ENV === "production"
+            ? process.env.GOOGLE_CALLBACK_URL_PROD
+            : process.env.GOOGLE_CALLBACK_URL,
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
@@ -29,10 +32,8 @@ module.exports = function (passport) {
     )
   );
 
-  // Serialize and deserialize user
-  // This is used to save user info in the session
   passport.serializeUser((user, done) => {
-    done(null, user.id); // or user._id
+    done(null, user.id);
   });
 
   passport.deserializeUser(async (id, done) => {
