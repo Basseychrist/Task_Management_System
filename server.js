@@ -117,12 +117,14 @@ app.get("/dashboard", utilities.checkLogin, (req, res) => {
 app.use(
   "/api-docs",
   swaggerUi.serve,
-  swaggerUi.setup(
-    swaggerJsdoc({
-      swaggerDefinition,
-      apis: ["./doc/swaggerDef.json"], // Path to the API routes files (where JSDoc comments are)
-    })
-  )
+  swaggerUi.setup(swaggerDefinition, {
+    swaggerOptions: {
+      oauth2RedirectUrl:
+        process.env.NODE_ENV === "production"
+          ? "https://task-management-system-rf8o.onrender.com/api-docs/oauth2-redirect.html"
+          : "http://localhost:5000/api-docs/oauth2-redirect.html",
+    },
+  })
 );
 
 // File Not Found Route - must be last route in list

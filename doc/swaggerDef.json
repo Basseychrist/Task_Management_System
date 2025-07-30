@@ -66,7 +66,7 @@
         "type": "oauth2",
         "flows": {
           "implicit": {
-            "authorizationUrl": "https://task-management-system-rf8o.onrender.com/auth/google/callback",
+            "authorizationUrl": "https://accounts.google.com/o/oauth2/auth",
             "scopes": {
               "profile": "Access to user profile",
               "email": "Access to user email"
