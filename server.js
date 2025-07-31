@@ -18,6 +18,7 @@ const flash = require("connect-flash");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const app = express();
+
 // Passport config
 require("./config/passport")(passport);
 // Load config
@@ -32,6 +33,7 @@ const baseController = require("./controllers/baseController");
 const errorRoute = require("./routes/errorRoute");
 const auth = require("./routes/auth");
 const tasks = require("./routes/tasks");
+const usersRouter = require('./routes/users');
 
 // Import the database connection function
 const connectDB = require("./config/database");
@@ -124,6 +126,9 @@ app.get("/dashboard", utilities.checkLogin, (req, res) => {
     user: req.user || res.locals.user,
   });
 });
+app.use("/users", usersRouter); // users router
+app.use("/error", errorRoute);
+
 
 // API Documentation
 app.use(

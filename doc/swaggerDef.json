@@ -3,128 +3,30 @@
   "info": {
     "title": "Task Management System API",
     "version": "1.0.0",
-    "description": "API documentation for the Task Management System. Includes authentication (Google OAuth), user, and task management endpoints.",
-    "contact": {
-      "name": "eno-obong Etim Bassey",
-      "email": "enobongetimbassey101@gmail.com"
-    }
+    "description": "API documentation for Task Management System"
   },
-  "servers": [
-    {
-      "url": "https://task-management-system-rf8o.onrender.com/",
-      "description": "production server"
-    }
-  ],
-  "components": {
-    "schemas": {
-      "User": {
-        "type": "object",
-        "properties": {
-          "_id": { "type": "string" },
-          "googleId": { "type": "string" },
-          "displayName": { "type": "string" },
-          "firstName": { "type": "string" },
-          "lastName": { "type": "string" },
-          "image": { "type": "string" },
-          "email": { "type": "string", "format": "email" },
-          "createdAt": { "type": "string", "format": "date-time" }
-        }
-      },
-      "Task": {
-        "type": "object",
-        "properties": {
-          "_id": { "type": "string" },
-          "title": { "type": "string" },
-          "description": { "type": "string" },
-          "status": {
-            "type": "string",
-            "enum": ["pending", "in-progress", "completed", "cancelled"]
-          },
-          "priority": { "type": "string", "enum": ["low", "medium", "high"] },
-          "dueDate": { "type": "string", "format": "date-time" },
-          "assignedTo": { "type": "string" },
-          "createdBy": { "type": "string" },
-          "createdAt": { "type": "string", "format": "date-time" },
-          "updatedAt": { "type": "string", "format": "date-time" },
-          "tags": { "type": "array", "items": { "type": "string" } },
-          "attachments": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "filename": { "type": "string" },
-                "url": { "type": "string" },
-                "size": { "type": "number" }
+  "paths": {
+    "/users": {
+      "get": {
+        "summary": "Get all users",
+        "responses": {
+          "200": {
+            "description": "A list of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/User" }
+                }
               }
             }
           }
         }
       }
     },
-    "securitySchemes": {
-      "googleOAuth": {
-        "type": "oauth2",
-        "flows": {
-          "implicit": {
-            "authorizationUrl": "https://accounts.google.com/o/oauth2/auth",
-            "scopes": {
-              "profile": "Access to user profile",
-              "email": "Access to user email"
-            }
-          }
-        }
-      }
-    }
-  },
-  "security": [{ "googleOAuth": [] }],
-  "paths": {
-    "/auth/google": {
-      "get": {
-        "summary": "Start Google OAuth login",
-        "description": "Redirects user to Google for authentication.",
-        "tags": ["Auth"],
-        "responses": {
-          "302": { "description": "Redirect to Google OAuth" }
-        }
-      }
-    },
-    "/auth/google/callback": {
-      "get": {
-        "summary": "Google OAuth callback",
-        "description": "Handles Google OAuth callback and logs in the user.",
-        "tags": ["Auth"],
-        "responses": {
-          "302": {
-            "description": "Redirect to dashboard on success or login on failure"
-          }
-        }
-      }
-    },
-    "/auth/logout": {
-      "get": {
-        "summary": "Logout user",
-        "tags": ["Auth"],
-        "responses": {
-          "302": { "description": "Redirect to login page" }
-        }
-      }
-    },
-    "/dashboard": {
-      "get": {
-        "summary": "Get dashboard for logged-in user",
-        "tags": ["Dashboard"],
-        "security": [{ "googleOAuth": [] }],
-        "responses": {
-          "200": { "description": "Dashboard page" },
-          "302": { "description": "Redirect to login if not authenticated" }
-        }
-      }
-    },
     "/users/{id}": {
       "get": {
-        "summary": "Get user profile",
-        "tags": ["User"],
-        "security": [{ "googleOAuth": [] }],
+        "summary": "Get user by ID",
         "parameters": [
           {
             "name": "id",
@@ -135,25 +37,25 @@
         ],
         "responses": {
           "200": {
-            "description": "User profile",
+            "description": "User found",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/User" }
               }
             }
           },
-          "404": { "description": "User not found" }
+          "404": {
+            "description": "User not found"
+          }
         }
       }
     },
     "/tasks": {
       "get": {
-        "summary": "Get all tasks for the logged-in user",
-        "tags": ["Task"],
-        "security": [{ "googleOAuth": [] }],
+        "summary": "Get all tasks for signed-in user",
         "responses": {
           "200": {
-            "description": "List of tasks",
+            "description": "A list of tasks",
             "content": {
               "application/json": {
                 "schema": {
@@ -167,8 +69,6 @@
       },
       "post": {
         "summary": "Create a new task",
-        "tags": ["Task"],
-        "security": [{ "googleOAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -185,41 +85,13 @@
                 "schema": { "$ref": "#/components/schemas/Task" }
               }
             }
-          },
-          "400": { "description": "Validation Error" },
-          "500": { "description": "Server Error" }
+          }
         }
       }
     },
     "/tasks/{id}": {
-      "get": {
-        "summary": "Get a single task by ID",
-        "tags": ["Task"],
-        "security": [{ "googleOAuth": [] }],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Task details",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/Task" }
-              }
-            }
-          },
-          "404": { "description": "Task not found" }
-        }
-      },
       "put": {
-        "summary": "Update a task by ID",
-        "tags": ["Task"],
-        "security": [{ "googleOAuth": [] }],
+        "summary": "Update a task",
         "parameters": [
           {
             "name": "id",
@@ -245,13 +117,13 @@
               }
             }
           },
-          "404": { "description": "Task not found" }
+          "404": {
+            "description": "Task not found"
+          }
         }
       },
       "delete": {
-        "summary": "Delete a task by ID",
-        "tags": ["Task"],
-        "security": [{ "googleOAuth": [] }],
+        "summary": "Delete a task",
         "parameters": [
           {
             "name": "id",
@@ -261,8 +133,34 @@
           }
         ],
         "responses": {
-          "204": { "description": "Task deleted" },
-          "404": { "description": "Task not found" }
+          "204": {
+            "description": "Task deleted"
+          },
+          "404": {
+            "description": "Task not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "username": { "type": "string" },
+          "email": { "type": "string" }
+        }
+      },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "status": { "type": "string" },
+          "userId": { "type": "string" }
         }
       }
     }
