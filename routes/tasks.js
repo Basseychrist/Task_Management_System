@@ -104,7 +104,6 @@ const validateTask = [
           );
         }
       } else if (typeof value === "string") {
-        // Accept comma-separated string
         const tagsArray = value.split(",").map((tag) => tag.trim());
         if (
           !tagsArray.every((tag) => typeof tag === "string" && tag.length > 0)

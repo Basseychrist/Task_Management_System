@@ -1,18 +1,16 @@
-const Task = require("../models/task");
-const User = require("../models/user");
 const { validationResult } = require("express-validator");
+const Task = require("../models/Task");
+const User = require("../models/User");
 
-// Helper function for error handling
+// Helper for error rendering
 const handleError = (
   res,
   error,
   message = "Server Error",
   statusCode = 500
 ) => {
-  console.error(error);
   res.status(statusCode).render("errors/error", {
-    // <-- update this line
-    message: message,
+    message,
     status: statusCode,
     error: error.message,
     title: "Error",
@@ -22,6 +20,8 @@ const handleError = (
 // @desc    Show all tasks
 // @route   GET /tasks
 exports.getTasks = async (req, res) => {
+  const isApi =
+    req.headers.accept && req.headers.accept.includes("application/json");
   try {
     const tasks = await Task.find({ createdBy: req.user.id })
       .populate("createdBy", "displayName")
@@ -29,23 +29,14 @@ exports.getTasks = async (req, res) => {
       .sort({ createdAt: "desc" })
       .lean();
 
-    // Return JSON if API client (Swagger UI, Postman, etc)
-    if (req.headers.accept && req.headers.accept.includes("application/json")) {
-      return res.json(tasks);
-    }
+    if (isApi) return res.json(tasks);
 
-    // Otherwise, render the HTML view
-    res.render("tasks/index", {
-      tasks,
-      title: "My Tasks",
-    });
+    res.render("tasks/index", { tasks, title: "My Tasks" });
   } catch (err) {
-    // Return JSON error for API clients
-    if (req.headers.accept && req.headers.accept.includes("application/json")) {
+    if (isApi)
       return res
         .status(500)
         .json({ message: "Failed to fetch tasks", error: err.message });
-    }
     handleError(res, err, "Failed to fetch tasks", 500);
   }
 };
@@ -62,9 +53,7 @@ exports.getTaskById = async (req, res) => {
       .lean();
 
     if (!task) {
-      if (isApi) {
-        return res.status(404).json({ message: "Task not found" });
-      }
+      if (isApi) return res.status(404).json({ message: "Task not found" });
       return handleError(
         res,
         new Error("Task not found"),
@@ -79,9 +68,7 @@ exports.getTaskById = async (req, res) => {
       task.assignedTo &&
       task.assignedTo._id.toString() !== req.user.id
     ) {
-      if (isApi) {
-        return res.status(403).json({ message: "Not authorized" });
-      }
+      if (isApi) return res.status(403).json({ message: "Not authorized" });
       return handleError(
         res,
         new Error("Not authorized"),
@@ -90,20 +77,14 @@ exports.getTaskById = async (req, res) => {
       );
     }
 
-    if (isApi) {
-      return res.json(task);
-    }
+    if (isApi) return res.json(task);
 
-    res.render("tasks/show", {
-      task,
-      title: task.title,
-    });
+    res.render("tasks/show", { task, title: task.title });
   } catch (err) {
-    if (isApi) {
+    if (isApi)
       return res
         .status(500)
         .json({ message: "Failed to fetch task", error: err.message });
-    }
     handleError(res, err, "Failed to fetch task", 500);
   }
 };
@@ -118,8 +99,8 @@ exports.newTaskPage = async (req, res) => {
     res.render("tasks/new", {
       users,
       errors: null,
-      title: "Add New Task", // Pass title
-      task: {}, // <-- Always pass an empty task object
+      title: "Add New Task",
+      task: {},
     });
   } catch (err) {
     handleError(res, err, "Failed to load new task form", 500);
@@ -142,9 +123,7 @@ exports.createTask = async (req, res) => {
     req.headers.accept && req.headers.accept.includes("application/json");
 
   if (!errors.isEmpty()) {
-    if (isApi) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+    if (isApi) return res.status(400).json({ errors: errors.array() });
     const users = await User.find({ _id: { $ne: req.user.id } })
       .select("displayName")
       .lean();
@@ -197,7 +176,7 @@ exports.createTask = async (req, res) => {
       attachmentsArray = [];
     }
 
-    const newTask = {
+    const newTask = await Task.create({
       title,
       description,
       status: status || "pending",
@@ -207,35 +186,17 @@ exports.createTask = async (req, res) => {
       createdBy: req.user.id,
       tags: tagsArray || [],
       attachments: attachmentsArray,
-    };
+    });
 
-    const createdTask = await Task.create(newTask);
-
-    if (isApi) {
-      return res.status(201).json(createdTask);
-    }
+    if (isApi) return res.status(201).json(newTask);
 
     req.flash("success_msg", "Task created successfully!");
     res.redirect("/tasks");
   } catch (err) {
-    if (isApi) {
+    if (isApi)
       return res
         .status(500)
         .json({ message: "Failed to create task", error: err.message });
-    }
-    // If it's a Mongoose validation error, show errors in the form
-    if (err.name === "ValidationError") {
-      const users = await User.find({ _id: { $ne: req.user.id } })
-        .select("displayName")
-        .lean();
-      const errors = Object.values(err.errors).map((e) => ({ msg: e.message }));
-      return res.status(400).render("tasks/new", {
-        errors,
-        task: req.body,
-        users,
-        title: "Add New Task",
-      });
-    }
     handleError(res, err, "Failed to create task", 500);
   }
 };
@@ -285,9 +246,7 @@ exports.updateTask = async (req, res) => {
     req.headers.accept && req.headers.accept.includes("application/json");
 
   if (!errors.isEmpty()) {
-    if (isApi) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+    if (isApi) return res.status(400).json({ errors: errors.array() });
     const users = await User.find({ _id: { $ne: req.user.id } })
       .select("displayName")
       .lean();
@@ -304,9 +263,7 @@ exports.updateTask = async (req, res) => {
     let task = await Task.findById(req.params.id);
 
     if (!task) {
-      if (isApi) {
-        return res.status(404).json({ message: "Task not found" });
-      }
+      if (isApi) return res.status(404).json({ message: "Task not found" });
       return handleError(
         res,
         new Error("Task not found"),
@@ -316,9 +273,7 @@ exports.updateTask = async (req, res) => {
     }
 
     if (task.createdBy.toString() !== req.user.id) {
-      if (isApi) {
-        return res.status(403).json({ message: "Not authorized" });
-      }
+      if (isApi) return res.status(403).json({ message: "Not authorized" });
       return handleError(
         res,
         new Error("Not authorized"),
@@ -338,13 +293,11 @@ exports.updateTask = async (req, res) => {
       attachments,
     } = req.body;
 
-    // Only use assignedTo as an ObjectId string
     const assignedToId =
       typeof assignedTo === "object" && assignedTo._id
         ? assignedTo._id
         : assignedTo;
 
-    // Tags: handle array or string
     let tagsArray = tags;
     if (typeof tagsArray === "string") {
       tagsArray = tagsArray
@@ -355,7 +308,6 @@ exports.updateTask = async (req, res) => {
       tagsArray = tagsArray.map((t) => t.trim());
     }
 
-    // Attachments: handle array or string
     let attachmentsArray = attachments;
     if (typeof attachmentsArray === "string") {
       try {
@@ -384,18 +336,15 @@ exports.updateTask = async (req, res) => {
       runValidators: true,
     });
 
-    if (isApi) {
-      return res.json(task);
-    }
+    if (isApi) return res.json(task);
 
     req.flash("success_msg", "Task updated successfully!");
     res.redirect("/tasks");
   } catch (err) {
-    if (isApi) {
+    if (isApi)
       return res
         .status(500)
         .json({ message: "Failed to update task", error: err.message });
-    }
     handleError(res, err, "Failed to update task", 500);
   }
 };
@@ -404,16 +353,12 @@ exports.updateTask = async (req, res) => {
 // @route   DELETE /tasks/:id
 exports.deleteTask = async (req, res) => {
   const isApi =
-    req.headers.accept &&
-    (req.headers.accept.includes("application/json") ||
-      req.headers.accept === "*/*");
+    req.headers.accept && req.headers.accept.includes("application/json");
   try {
     const task = await Task.findById(req.params.id);
 
     if (!task) {
-      if (isApi) {
-        return res.status(404).json({ message: "Task not found" });
-      }
+      if (isApi) return res.status(404).json({ message: "Task not found" });
       return handleError(
         res,
         new Error("Task not found"),
@@ -423,9 +368,7 @@ exports.deleteTask = async (req, res) => {
     }
 
     if (task.createdBy.toString() !== req.user.id) {
-      if (isApi) {
-        return res.status(403).json({ message: "Not authorized" });
-      }
+      if (isApi) return res.status(403).json({ message: "Not authorized" });
       return handleError(
         res,
         new Error("Not authorized"),
@@ -436,18 +379,16 @@ exports.deleteTask = async (req, res) => {
 
     await Task.deleteOne({ _id: req.params.id });
 
-    if (isApi) {
+    if (isApi)
       return res.status(200).json({ message: "Task deleted successfully" });
-    }
 
     req.flash("success_msg", "Task deleted successfully!");
     res.redirect("/tasks");
   } catch (err) {
-    if (isApi) {
+    if (isApi)
       return res
         .status(500)
         .json({ message: "Failed to delete task", error: err.message });
-    }
     handleError(res, err, "Failed to delete task", 500);
   }
 };
