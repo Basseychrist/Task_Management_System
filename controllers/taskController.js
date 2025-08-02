@@ -1,6 +1,6 @@
 const { validationResult } = require("express-validator");
-const Task = require("../models/Task");
-const User = require("../models/User");
+const Task = require("../models/task");
+const User = require("../models/user");
 
 // Helper for error rendering
 const handleError = (
