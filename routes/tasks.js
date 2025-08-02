@@ -97,7 +97,14 @@ const validateTask = [
   body("tags")
     .optional({ nullable: true })
     .custom((value) => {
-      if (value) {
+      if (Array.isArray(value)) {
+        if (!value.every((tag) => typeof tag === "string" && tag.length > 0)) {
+          throw new Error(
+            "Tags must be a non-empty string or array of non-empty strings"
+          );
+        }
+      } else if (typeof value === "string") {
+        // Accept comma-separated string
         const tagsArray = value.split(",").map((tag) => tag.trim());
         if (
           !tagsArray.every((tag) => typeof tag === "string" && tag.length > 0)
@@ -106,26 +113,43 @@ const validateTask = [
             "Tags must be a comma-separated list of non-empty strings"
           );
         }
+      } else if (value !== undefined && value !== null) {
+        throw new Error("Tags must be a string or array of strings");
       }
       return true;
     }),
   body("attachments")
     .optional({ nullable: true })
     .custom((value) => {
-      try {
-        if (value) {
+      if (Array.isArray(value)) {
+        if (
+          !value.every(
+            (att) =>
+              typeof att === "object" &&
+              att.filename &&
+              att.url &&
+              typeof att.filename === "string" &&
+              typeof att.url === "string"
+          )
+        ) {
+          throw new Error(
+            "Attachments must be an array of objects with filename and url"
+          );
+        }
+      } else if (typeof value === "string") {
+        try {
           const attachmentsArray = JSON.parse(value);
           if (
             !Array.isArray(attachmentsArray) ||
             !attachmentsArray.every((att) => att.filename && att.url)
           ) {
-            throw new Error(
-              "Attachments must be a JSON array of objects with filename and url"
-            );
+            throw new Error();
           }
+        } catch (e) {
+          throw new Error("Attachments must be a valid JSON array");
         }
-      } catch (e) {
-        throw new Error("Attachments must be a valid JSON array");
+      } else if (value !== undefined && value !== null) {
+        throw new Error("Attachments must be a string or array of objects");
       }
       return true;
     }),

@@ -73,7 +73,7 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/Task" }
+              "schema": { "$ref": "#/components/schemas/TaskInput" }
             }
           }
         },
@@ -85,11 +85,48 @@
                 "schema": { "$ref": "#/components/schemas/Task" }
               }
             }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           }
         }
       }
     },
     "/tasks/{id}": {
+      "get": {
+        "summary": "Get a task by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Task" }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      },
       "put": {
         "summary": "Update a task",
         "parameters": [
@@ -104,7 +141,7 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/Task" }
+              "schema": { "$ref": "#/components/schemas/TaskInput" }
             }
           }
         },
@@ -117,8 +154,21 @@
               }
             }
           },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
           "404": {
-            "description": "Task not found"
+            "description": "Task not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           }
         }
       },
@@ -133,11 +183,21 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "Task deleted"
+          "200": {
+            "description": "Task deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeleteResponse" }
+              }
+            }
           },
           "404": {
-            "description": "Task not found"
+            "description": "Task not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           }
         }
       }
@@ -159,8 +219,84 @@
           "id": { "type": "string" },
           "title": { "type": "string" },
           "description": { "type": "string" },
-          "status": { "type": "string" },
-          "userId": { "type": "string" }
+          "status": {
+            "type": "string",
+            "enum": ["pending", "in-progress", "completed", "cancelled"]
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["low", "medium", "high"]
+          },
+          "dueDate": { "type": "string", "format": "date" },
+          "userId": { "type": "string" },
+          "assignedTo": { "type": "string" },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "filename": { "type": "string" },
+                "url": { "type": "string", "format": "uri" },
+                "size": { "type": "integer" }
+              }
+            }
+          }
+        }
+      },
+      "TaskInput": {
+        "type": "object",
+        "required": ["title", "description", "status"],
+        "properties": {
+          "title": { "type": "string", "maxLength": 100 },
+          "description": { "type": "string", "maxLength": 500 },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "in-progress", "completed", "cancelled"]
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["low", "medium", "high"]
+          },
+          "dueDate": { "type": "string", "format": "date" },
+          "assignedTo": { "type": "string" },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "filename": { "type": "string" },
+                "url": { "type": "string", "format": "uri" },
+                "size": { "type": "integer" }
+              }
+            }
+          }
+        }
+      },
+      "DeleteResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Task deleted successfully"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "errors": {
+            "type": "array",
+            "items": { "type": "object" }
+          }
         }
       }
     }
